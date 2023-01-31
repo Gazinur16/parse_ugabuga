@@ -6,7 +6,7 @@ responce = requests.get(link).text
 soup = BeautifulSoup(responce, 'lxml')
 
 tbody_block = soup.find('tbody') #Тело таблицы там усе
-week_days = tbody_block.find_all('tr', 'noinfo dayheader' and 'dayheader') #Споисок со всеми днями неделями
+week_days = tbody_block.find_all('tr', 'noinfo dayheader' and 'dayheader') #Споисок со всеми днями неделями(пока не используется)
 
 
 '''
@@ -19,7 +19,7 @@ for i in week_days:
 '''
 
 
-def ras_less(num, index, week):
+def ras_less(num, index, week): #метод для вывода собственно расписания
     num_less = 0  # эта
     last_time = 0  # и эта переменная введена для адекватного отображения списка
 
@@ -28,7 +28,7 @@ def ras_less(num, index, week):
 
         # print(last_time, check_less[1].text)
 
-        if check_less[2].text == "Нет информации":
+        if check_less[2].text == "Нет информации":#те случаи когда td имеет содержание "Нет информации"
             num_less += 1
             # Не может быть ситуации когда нет информации и повтор урока
             # Так что, тут проверку делать не обязательно
