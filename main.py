@@ -18,6 +18,7 @@ day_week = input("Введите день недели: ")
 Чтобы функция вывода не выходила за рамки вызываемого дня"""
 
 if day_week == "Понедельник": #Если чувак написал Понедельник
+    position = 0
     j = 0 #Переменная помогающая найти строку вызываего дня
     for i in check_lessik: #Пербором находим нужный день
 
@@ -39,11 +40,17 @@ if day_week == "Понедельник": #Если чувак написал П�
         else:
             j+=1
     print(num)
-    oc.ras_less(num, 0, week, lesson)
+    print(position)
+    oc.ras_less(num, position, week, lesson)
 
 elif day_week == "Вторник":
+    position = 1
     j = 0
     for i in check_lessik:
+        if check_lessik[j].text == "" and (check_lessik[j - 1].text == "" or
+                                           check_lessik[j - 1].text == "Нет информации"):
+            position += 1
+
         if check_lessik[j].text == "Вторник":
             num = 1
             index = j
@@ -59,15 +66,118 @@ elif day_week == "Вторник":
                     index += 1
         else:
             j += 1
+    print(position)
     print(num)
-    oc.ras_less(num, 14, week)
+    oc.ras_less(num, position, week, lesson)
 
 elif day_week == "Среда":
-    index = 20
-    oc.ras_less(index, week)
+    position = 1
+    j = 0
+    for i in check_lessik:
+        if (check_lessik[j].text == ""  and (check_lessik[j - 1].text == "" or
+                                           check_lessik[j - 1].text == "Нет информации")) or check_lessik[j].text == "Вторник":
+            position += 1
+
+        if check_lessik[j].text == "Среда":
+            num = 1
+            index = j
+            for i in check_lessik:
+                # print(check_lessik[index].text)
+                if check_lessik[index].text == "" and (check_lessik[index - 1].text == "" or
+                                                       check_lessik[index - 1].text == "Нет информации"):
+                    index += 1
+                    num += 1
+                elif check_lessik[index].text == "Четверг":
+                    break
+                else:
+                    index += 1
+        else:
+            j += 1
+    print(position)
+    print(num)
+    oc.ras_less(num, position , week, lesson)
+
 elif day_week == "Четверг":
-    index = 34
-    oc.ras_less(index, week)
+    position = 1
+    j = 0
+    for i in check_lessik:
+        if (check_lessik[j].text == "" and (check_lessik[j - 1].text == "" or
+                                           check_lessik[j - 1].text == "Нет информации")) or \
+                check_lessik[j].text == "Вторник" or check_lessik[j].text == "Среда":
+            position += 1
+
+        if check_lessik[j].text == "Четверг":
+            num = 1
+            index = j
+            for i in check_lessik:
+                # print(check_lessik[index].text)
+                if (check_lessik[index].text == "" and (check_lessik[index - 1].text == "" or
+                                                       check_lessik[index - 1].text == "Нет информации")):
+                    index += 1
+                    num += 1
+                elif check_lessik[index].text == "Пятница":
+                    break
+                else:
+                    index += 1
+        else:
+            j += 1
+    print(position)
+    print(num)
+    oc.ras_less(num, position, week, lesson)
+
 elif day_week == "Пятница":
-    index = 30
-    oc.ras_less(index, week)
+    position = 1
+    j = 0
+    for i in check_lessik:
+        if check_lessik[j].text == "" and (check_lessik[j - 1].text == "" or
+                                           check_lessik[j - 1].text == "Нет информации") or \
+                        check_lessik[j].text == "Вторник" or check_lessik[j].text == "Среда" or check_lessik[j].text == "Четверг":
+            position += 1
+
+        if check_lessik[j].text == "Пятница":
+            num = 1
+            index = j
+            for i in check_lessik:
+                # print(check_lessik[index].text)
+                if check_lessik[index].text == "" and (check_lessik[index - 1].text == "" or
+                                                       check_lessik[index - 1].text == "Нет информации"):
+                    index += 1
+                    num += 1
+                elif check_lessik[index].text == "Суббота":
+                    break
+                else:
+                    index += 1
+        else:
+            j += 1
+    print(position)
+    print(num)
+    oc.ras_less(num, position, week, lesson)
+
+elif day_week == "Суббота":
+    position = 1
+    j = 0
+    for i in check_lessik:
+        if check_lessik[j].text == "" and (check_lessik[j - 1].text == "" or
+                                           check_lessik[j - 1].text == "Нет информации") or \
+                        check_lessik[j].text == "Вторник" or check_lessik[j].text == "Среда" or \
+                check_lessik[j].text == "Четверг" or check_lessik[j].text == "Пятница":
+            position += 1
+
+        if check_lessik[j].text == "Суббота":
+            num = 1
+            index = j
+            for i in check_lessik:
+                # print(check_lessik[index].text)
+                if check_lessik[index].text == "" and (check_lessik[index - 1].text == "" or
+                                                       check_lessik[index - 1].text == "Нет информации"):
+                    index += 1
+                    num += 1
+                elif check_lessik[index].text == "21:55-23:00":
+                    break
+                else:
+                    index += 1
+        else:
+            j += 1
+    print(position)
+    print(num)
+    oc.ras_less(num, position, week, lesson)
