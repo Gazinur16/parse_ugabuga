@@ -17,7 +17,7 @@ dp = Dispatcher(bot)
 
 #Статические поля(типа)
 str_week = btn_res.get_week()
-num_week = nums_from_string.get_nums(str_week)
+num_week = nums_from_string.get_nums(str_week) #номер текушей недели
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
@@ -93,8 +93,8 @@ async def start(message: types.Message):
         #Проверить статус пользователся на то, что он делает запрос на неделю
         await bot.send_message(message.from_user.id, "Введи неделю: ")
         #Проверка на то что введена цифра
-        if message.text == 'Кнопка2':
-            await bot.send_message(message.from_user.id, )
+
+
 
 @dp.message_handler(commands=['by_teacher'])
 async def start(message: types.Message):
@@ -137,35 +137,63 @@ async def start(message: types.Message):
 #
 #             await bot.send_message(message.from_user.id, "Успешная рассылка")
 
-'''
-@dp.message_handler() #реакция на кнопки
+@dp.message_handler() #реакция на сообщения
 async def send_btn(message: types.Message):
-    if message.text == 'Кнопка2':
-        await bot.send_message(message.from_user.id, txt.text2)
-        await bot.send_message(message.from_user.id, 'А это инлайн кнопка:' ,  reply_markup = inline_kb.main_btn)
-    elif message.text == 'Кнопка1':
-        await bot.send_message(message.from_user.id, txt.text1)
-    elif message.text == 'Ваш товар':
-        await bot.send_message(message.from_user.id, 'ИНФОРМАЦИЯ о Вашем товаре!')
-    elif message.text == 'Информация о вашей услуге':
-        await bot.send_message(message.from_user.id, 'Я не знаю какая у вас услуга, поэтому это поле пока пустует :(')
-    elif message.text == 'Ваш текст':
-        await bot.send_message(message.from_user.id, f'Скоро тут будет ваш текст, но пока тут еще один отрывок из "Мастер и Маргарита": \n\n  {txt.text3}')
-    elif message.text == 'Далее:':
-        await bot.send_message(message.from_user.id, 'Подменю:', reply_markup = keyboard.shou_btn2)#вызываем подменю
-    elif message.text == 'Ваши контакты':
-        await bot.send_message(message.from_user.id, txt.text4)
-    elif message.text == 'Ваши картинки':
-        await bot.send_message(message.from_user.id, 'Ваших картинок у меня нет, поэтому тут котик')
-        photo1 = open('cat.jpg','rb')
-        await bot.send_photo(chat_id=message.chat.id, photo=photo1)
-    elif message.text == 'Ваши данные':
-        await bot.send_message(message.from_user.id, 'Я их скоро получу)))')
-    elif message.text == 'Оплата':
-        await bot.send_message(message.from_user.id, 'В дальнейшем можно будет сделать оплату прямо через бота на ваш Киви')
-    elif message.text == 'Назад:':
-        await bot.send_message(message.from_user.id, 'Назад', reply_markup = keyboard.shou_btn)
-'''
+    print(message.text)
+
+    async def output_today(str_date):  #Метод для отображения сегодняшнего расписания
+        # print(str_date[0][0])
+        mass = []
+        f = 0
+        for i in str_date:
+            for j in i:
+                if f == len(str_date):
+                    break
+                k = 0
+
+                a = (f"Пара №{str_date[f][k]} {str_date[f][k + 1]} \n{str_date[f][k + 2]}: "
+                     f"{str_date[f][k + 3]} - {str_date[f][k + 4]} - {str_date[f][k + 5]}\n\n")
+                mass.append(a)
+                f += 1
+                # print(f)
+
+        await bot.send_message(message.from_user.id, "Твое расписание на неделю: " + '\n\n' + ''.join(mass),
+                               reply_markup=inline_kb.main_btn)
+        print(mass)
+
+    if message.text == str(num_week[0]): #Когда выбрана текущая неделя.
+
+        now = datetime.now()
+        weekday = datetime.weekday(now)# Узнаем день недели
+
+        if weekday == 0:  # monday
+            str_date = btn_res.monday(num_week[0])
+            await output_today(str_date)
+
+        elif weekday == 1:  # tuesday
+            str_date = btn_res.tuesday(num_week[0])
+            await output_today(str_date)
+
+        elif weekday == 2:  # wednesday
+            str_date = btn_res.wednesday(num_week[0])
+            await output_today(str_date)
+
+        elif weekday == 3:  # thursday
+            str_date = btn_res.thursday(num_week[0])
+            await output_today(str_date)
+
+        elif weekday == 4:  # friday
+            str_date = btn_res.friday(num_week[0])
+            await output_today(str_date)
+
+        elif weekday == 5:  # saturday
+            str_date = btn_res.saturday(num_week[0])
+            await output_today(str_date)
+
+    else: #Если неделя не текущая начинаем с понедельника
+        str_date = btn_res.monday(message.text)
+        await output_today(str_date)
+
 # @dp.callback_query_handler(text = 'cat')#реакция на инлайн кнопку
 # async def send_inll_btn(message: types.Message):
 #     await bot.delete_message(message.from_user.id, message.message.message_id)#удаление последнего сообщения
