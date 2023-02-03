@@ -40,64 +40,61 @@ async def start(message: types.Message):
 @dp.message_handler(commands=['today'])
 async def start(message: types.Message):
     if message.chat.type == 'private':
-        # TODO распознавать какой сегодня день и на этой основе вызывать определенную функцию из btn_response
+        async def output_today(str_date): #Метод для отображения сегоднящнего расписания
+            # print(str_date[0][0])
+            mass = []
+            f = 0
+            for i in str_date:
+                for j in i:
+                    if f == len(str_date):
+                        break
+                    k = 0
 
-        await bot.send_message(message.from_user.id, "Твое расписание на сегодня: ")
+                    a = (f"Пара №{str_date[f][k]} {str_date[f][k + 1]} \n{str_date[f][k + 2]}: "
+                         f"{str_date[f][k + 3]} - {str_date[f][k + 4]} - {str_date[f][k + 5]}\n\n")
+                    mass.append(a)
+                    f += 1
+                    # print(f)
+
+            await bot.send_message(message.from_user.id, "Твое расписание на сегодня: " + '\n\n' + ''.join(mass))
+            print(mass)
+
         now = datetime.now()
-        weekday = datetime.weekday(now)
+        weekday = datetime.weekday(now) #Узнаем день недели
 
         if weekday == 0: #monday
             str_date = btn_res.monday(num_week[0])
-            await bot.send_message(message.from_user.id, f"Пара №{str_date[0]} {str_date[1]} \n{str_date[2]}: "
-                                                         f"{str_date[3]} - {str_date[4]} - {str_date[5]}")
+            await output_today(str_date)
+
         elif weekday == 1: #tuesday
             str_date = btn_res.tuesday(num_week[0])
-            await bot.send_message(message.from_user.id, f"Пара №{str_date[0]} {str_date[1]} \n{str_date[2]}: "
-                                                         f"{str_date[3]} - {str_date[4]} - {str_date[5]}")
+            await output_today(str_date)
+
         elif weekday == 2: #wednesday
             str_date = btn_res.wednesday(num_week[0])
-            await bot.send_message(message.from_user.id, f"Пара №{str_date[0]} {str_date[1]} \n{str_date[2]}: "
-                                                         f"{str_date[3]} - {str_date[4]} - {str_date[5]}")
-        elif weekday == 4:  #thursday
+            await output_today(str_date)
+
+        elif weekday == 3:  #thursday
             str_date = btn_res.thursday(num_week[0])
-            # print(str_date[0][0])
-            mass = []
-            for i in str_date:
-                f = 0
-                for j in i:
-                    k = 0
-                    await bot.send_message(message.from_user.id,
-                                       f"Пара №{str_date[f][k]} {str_date[f][k + 1]} \n{str_date[f][k + 2]}: "
-                                       f"{str_date[f][k + 3]} - {str_date[f][k + 4]} - {str_date[f][k + 5]}")
-
-                    # a = (f"Пара №{str_date[f][k]} {str_date[f][k + 1]} \n{str_date[f][k + 2]}: "
-                    #            f"{str_date[f][k + 3]} - {str_date[f][k + 4]} - {str_date[f][k + 5]}\n")
-                    # mass.append((f"Пара №{str_date[f][k]} {str_date[f][k + 1]} \n{str_date[f][k + 2]}: "
-                    #            f"{str_date[f][k + 3]} - {str_date[f][k + 4]} - {str_date[f][k + 5]}\n"))
-                    f+=1
-
-
-            # await bot.send_message(message.from_user.id,
-            #                    f"Пара №{str_date[f][k]} {str_date[f][k + 1]} \n{str_date[f][k + 2]}: "
-            #                    f"{str_date[f][k + 3]} - {str_date[f][k + 4]} - {str_date[f][k + 5]}")
-            #await bot.send_message(message.from_user.id,mass)
-            # print(mass)
+            await output_today(str_date)
 
         elif weekday == 4:  #friday
             str_date = btn_res.friday(num_week[0])
-            await bot.send_message(message.from_user.id, f"Пара №{str_date[0]} {str_date[1]} \n{str_date[2]}: "
-                                                         f"{str_date[3]} - {str_date[4]} - {str_date[5]}")
+            await output_today(str_date)
+
         elif weekday == 5:  #saturday
             str_date = btn_res.saturday(num_week[0])
-            await bot.send_message(message.from_user.id, f"Пара №{str_date[0]} {str_date[1]} \n{str_date[2]}: "
-                                                         f"{str_date[3]} - {str_date[4]} - {str_date[5]}")
+            await output_today(str_date)
 
 @dp.message_handler(commands=['by_group'])
 async def start(message: types.Message):
     if message.chat.type == 'private':
         # TODO просьба вводить неделю(предлагать нынешнюю) и отвечать расписанием на неделю
-
-        await bot.send_message(message.from_user.id, "Твое расписание на неделю N{week}: ")
+        #Проверить статус пользователся на то, что он делает запрос на неделю
+        await bot.send_message(message.from_user.id, "Введи неделю: ")
+        #Проверка на то что введена цифра
+        if message.text == 'Кнопка2':
+            await bot.send_message(message.from_user.id, )
 
 @dp.message_handler(commands=['by_teacher'])
 async def start(message: types.Message):
