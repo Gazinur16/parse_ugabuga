@@ -1,14 +1,42 @@
 import requests
 from bs4 import BeautifulSoup
 import output_couples as oc
+import nums_from_string
 
-link = "https://isu.ugatu.su/api/new_schedule_api/?schedule_semestr_id=222&WhatShow=1&student_group_id=1557"
+link = "https://isu.ugatu.su/api/new_schedule_api/?schedule_semestr_id=222&WhatShow=1"
 responce = requests.get(link).text
 soup = BeautifulSoup(responce, 'lxml')
 
+all_groups = soup.find_all('option')
 tbody_block = soup.find('tbody') #Тело таблицы там усе
 lesson = tbody_block.find_all('tr')
 check_lessik = tbody_block.find_all('td')
+
+def get_groups(): #получаю массив из элементов(названий) групп
+    print(len(all_groups))
+    j = 0
+    a = []
+    for i in all_groups:
+        if j < 3:
+            j += 1
+            continue
+        else:
+            a.append(i.text)
+    return a
+
+def get_id_group(name_group): #Функия полуучения id_group из названия группы и обновления ссылки
+    for i in all_groups:
+        if i.text == name_group:
+            id_group = i.get('value')
+            new_link = f"https://isu.ugatu.su/api/new_schedule_api/?schedule_semestr_id=222&WhatShow=1&student_group_id={id_group}"
+            print(new_link)
+            responce = requests.get(new_link).text
+            soup = BeautifulSoup(responce, 'lxml')
+
+            global tbody_block, lesson, check_lessik
+            tbody_block = soup.find('tbody')  # Тело таблицы там усе
+            lesson = tbody_block.find_all('tr')
+            check_lessik = tbody_block.find_all('td')
 
 def get_week():
     str_week = soup.find('div', 'col-lg-3').text

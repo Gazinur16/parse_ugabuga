@@ -5,7 +5,6 @@ from datetime import datetime
 from db import Database
 import nums_from_string
 
-import buttons as keyboard #импортируем кнопки из отдельного файла
 import inlline_btn as inline_kb #импортируем из файла инлайн кнопки
 import btn_response as btn_res
 
@@ -13,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
-# db = Database('database.db')
+db = Database('database.db')
 
 #Статические поля(типа)
 str_week = btn_res.get_week()
@@ -21,7 +20,6 @@ num_week = nums_from_string.get_nums(str_week) #номер текушей нед
 
 #Методы:
 async def output_schedule(str_date, day):  #Метод для отображения расписания
-    # print(str_date[0][0])
     mass = []
     f = 0
     for i in str_date:
@@ -42,16 +40,23 @@ async def output_schedule(str_date, day):  #Метод для отображен
         couples = "\n\n"+"_> Похоже сегодня пар нет._"
     mess = header_mess + couples
     return mess
-    # print(mass)
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     if message.chat.type == 'private':
-        #TODO тут будет проверка на созданный профиль
-
-        # if not db.user_exists(message.from_user.id):
-        #     db.add_user(message.from_user.id)
-        await bot.send_message(message.from_user.id, "Привет!")
+        if not db.user_exists(message.from_user.id): #Провеерка что у User`а нет
+            db.add_user(message.from_user.id)#Если нет, выводим сообщение с просьбой выбрать группу
+            a = btn_res.get_groups()
+            await bot.send_message(message.from_user.id, "Привет! Выбери свою группу: ", reply_markup=inline_kb.show_groups(a, '1'))
+        else:
+            if db.check_group(message.from_user.id):
+                a = btn_res.get_groups()
+                await bot.send_message(message.from_user.id, "С возвращением, выбери свою группу: ",
+                                       reply_markup=inline_kb.show_groups(a, '1'))
+            else:
+                name_group = db.get_name_group(message.from_user.id)
+                btn_res.get_id_group(name_group)
+                await bot.send_message(message.from_user.id, f"С возвращением, ваша группа: *{name_group}*", parse_mode="Markdown")
 
 @dp.message_handler(commands=['profile'])
 async def profile(message: types.Message):
@@ -98,11 +103,13 @@ async def today(message: types.Message):
             str_date = btn_res.saturday(num_week[0])
             mess = await output_schedule(str_date, "Cуббота")
             await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
+        else:
+            await bot.send_message(message.from_user.id, "Сегодня же воскресенье, отдыхай!")
 
 @dp.message_handler(commands=['by_group'])
 async def by_group(message: types.Message):
     if message.chat.type == 'private':
-        # TODO просьба вводить неделю(предлагать нынешнюю) и отвечать расписанием на неделю
+        # TODO просьба вводить неделю(предлагать нынешнюю) и сделать проверку
         #Проверить статус пользователся на то, что он делает запрос на неделю
         await bot.send_message(message.from_user.id, "Введи неделю: ")
         #Проверка на то что введена цифра
@@ -129,8 +136,7 @@ async def help(message: types.Message):
         /by_group - показывает недельное расписание по вашей группе.
         /by_teacher - показывает расписание по преподу.
         /week - показывает текущую неделю.
-        
-        Код проекта находится на моем GitHub''')
+        ''')
 
 # @dp.message_handler(commands=['news'])
 # async def sendall(message: types.Message):
@@ -221,14 +227,28 @@ async def button(weekday): #Мне не нравится как я тут сде
 @dp.callback_query_handler(text = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']) #реакция на инлайн кнопку
 async def info_bth(callback: types.CallbackQuery):
     weekday = callback.data
-    # print(action)
-    #await resend(callback.message)
     #TODO попробовать не удалять последние сообщение а изменять его
     await bot.delete_message(callback.from_user.id, callback.message.message_id)# удаление последнего сообщения
     mess = await button(weekday)
 
     await bot.send_message(callback.from_user.id, mess,
                             reply_markup=inline_kb.main_btn, parse_mode="Markdown")
+
+@dp.callback_query_handler(text = ['1', '2', '3', '4', '5', '6', '7', '8']) #реакция на инлайн кнопку
+async def info_bth(callback: types.CallbackQuery):
+    index = callback.data
+    a = btn_res.get_groups()
+    # print(index)
+    await bot.delete_message(callback.from_user.id, callback.message.message_id)  # удаление последнего сообщения
+    await bot.send_message(callback.from_user.id, f"Страница №{index}",
+                               reply_markup=inline_kb.show_groups(a, index))
+
+@dp.callback_query_handler() #реакция на инлайн кнопку
+async def info_bth(callback: types.CallbackQuery):
+    group = callback.data
+    await bot.send_message(callback.from_user.id, f"Вы ввели свою  группу: {group}\nТеперь вы можете посмотреть рассписание")
+    db.set_name_group(callback.from_user.id, group)
+    btn_res.get_id_group(group)
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates = True)
