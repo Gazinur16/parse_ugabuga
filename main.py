@@ -4,6 +4,7 @@ from aiogram import Bot, Dispatcher, executor, types
 from datetime import datetime
 from db import Database
 import nums_from_string
+from fuzzywuzzy import process
 
 import inlline_btn as inline_kb #импортируем из файла инлайн кнопки
 import btn_response as btn_res
@@ -44,19 +45,18 @@ async def output_schedule(str_date, day):  #Метод для отображен
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     if message.chat.type == 'private':
+
         if not db.user_exists(message.from_user.id): #Провеерка что у User`а нет
-            db.add_user(message.from_user.id)#Если нет, выводим сообщение с просьбой выбрать группу
-            a = btn_res.get_groups()
-            await bot.send_message(message.from_user.id, "Привет! Выбери свою группу: ", reply_markup=inline_kb.show_groups(a, '1'))
+            db.add_user(message.from_user.id)#Если нет, добавляем id и выводим сообщение с просьбой написать группу
+            await bot.send_message(message.from_user.id, 'Добро пожаловать в бота расписаний!\n'
+                                                         'Напиши свою группу в формате: ГРУППА-НОМЕР(Б)', parse_mode="Markdown")
+        elif db.check_group(message.from_user.id): #Если id есть но группа не выбрана
+            await bot.send_message(message.from_user.id, 'C возвращением!\n'
+                                                         'Напиши свою группу в формате: ГРУППА-НОМЕР(Б)', parse_mode="Markdown")
         else:
-            if db.check_group(message.from_user.id):
-                a = btn_res.get_groups()
-                await bot.send_message(message.from_user.id, "С возвращением, выбери свою группу: ",
-                                       reply_markup=inline_kb.show_groups(a, '1'))
-            else:
-                name_group = db.get_name_group(message.from_user.id)
-                btn_res.get_id_group(name_group)
-                await bot.send_message(message.from_user.id, f"С возвращением, ваша группа: *{name_group}*", parse_mode="Markdown")
+            name_group = db.get_name_group(message.from_user.id)#если группа есть, получаем ее
+            btn_res.get_id_group(name_group) # обновляем ссылку для парсинга
+            await bot.send_message(message.from_user.id, f"С возвращением, ваша группа: *{name_group}*", parse_mode="Markdown")
 
 @dp.message_handler(commands=['profile'])
 async def profile(message: types.Message):
@@ -64,7 +64,7 @@ async def profile(message: types.Message):
         # TODO добавить возможность изменить группу
         if db.check_group(message.from_user.id):
             await bot.delete_message(message.from_user.id, message.message_id)
-            await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу")
+            await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу.")
         else:
             name_group = db.get_name_group(message.from_user.id)
             await bot.send_message(message.from_user.id, f"Твоя группа: *{name_group}*", parse_mode="Markdown")
@@ -75,7 +75,7 @@ async def today(message: types.Message):
     if message.chat.type == 'private':
         if db.check_group(message.from_user.id):
             await bot.delete_message(message.from_user.id, message.message_id)
-            await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу")
+            await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу.")
         else:
             now = datetime.now()
             weekday = datetime.weekday(now) #Узнаем день недели
@@ -119,17 +119,21 @@ async def by_group(message: types.Message):
         # TODO просьба вводить неделю(предлагать нынешнюю) и сделать проверку
         if db.check_group(message.from_user.id):
             await bot.delete_message(message.from_user.id, message.message_id)
-            await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу")
+            await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу.")
         else:
+            db.set_status(message.from_user.id, 'inweek')
             await bot.send_message(message.from_user.id, "Введи неделю на которе хотите посмотреть расписание: ")
 
 
 @dp.message_handler(commands=['by_teacher'])
 async def by_teacher(message: types.Message):
     if message.chat.type == 'private':
-
-        # TODO нужно парсить данные с другого окна - сделаю позже
-        await bot.send_message(message.from_user.id, "Скоро тут все будет... наверное.")
+        if db.check_group(message.from_user.id):
+            await bot.delete_message(message.from_user.id, message.message_id)
+            await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу.")
+        else:
+            # TODO нужно парсить данные с другого окна - сделаю позже
+            await bot.send_message(message.from_user.id, "Скоро тут все будет... наверное.")
 
 @dp.message_handler(commands=['week'])
 async def week(message: types.Message):
@@ -168,10 +172,28 @@ async def help(message: types.Message):
 
 @dp.message_handler() #реакция на сообщения
 async def send_btn(message: types.Message):
-    if db.check_group(message.from_user.id):
+
+    if db.check_status(message.from_user.id) == 'durak':  # если у юзера статус дурак(не юзер дурак, а защита от дурака)
         await bot.delete_message(message.from_user.id, message.message_id)
-        await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу")
-    else:
+
+    elif db.check_status(message.from_user.id) == 'regis': #если у юзера состояние регистрации
+        group = message.text #группа которую ввел пользователь
+        a = btn_res.get_groups() #массив из всех групп
+
+        if a.count(group):
+            db.set_name_group(message.from_user.id, group)  # записываем группу в БД
+            btn_res.get_id_group(group)  # обновляем ссылку парсинга
+            await bot.send_message(message.from_user.id,
+                                   f"Вы ввели свою  группу: {group}\nТеперь вы можете посмотреть "
+                                   f"расписание:\n\n/today - на сегодня\n/by_group - по неделям")
+        else:
+            options = process.extract(group, a, limit=3)
+            await bot.send_message(message.from_user.id, f"Может быть вы имели ввиду: ",
+                                    reply_markup=inline_kb.show_options(options))
+
+        db.set_status(message.from_user.id, 'durak')# cразу даем статус дурака
+
+    elif db.check_status(message.from_user.id) == 'inweek':
         print(message.text) #Введеная неделя
         global entered_week # сохраним для инлайн кнопок
         entered_week = message.text
@@ -230,10 +252,16 @@ async def send_btn(message: types.Message):
                     await bot.send_message(message.from_user.id, mess,
                                            reply_markup=inline_kb.main_btn, parse_mode="Markdown")
             else:
+                await bot.send_message(message.from_user.id, 'Выбрано неправильное значение недели.\n'
+                                                             'Допустимые значения от 23 до 40.')
                 await bot.delete_message(message.from_user.id, message.message_id)  # удаление последнего сообщения
         except:
             await bot.delete_message(message.from_user.id, message.message_id)  # удаление последнего сообщения
-
+            await bot.send_message(message.from_user.id, 'Выбрано неправильное значение недели.\n'
+                                                         'Допустимые значения от 23 до 40.')
+    else:
+        pass
+    db.set_status(message.from_user.id, 'durak')
 async def button(weekday): #Мне не нравится как я тут сделал, но пойдет
     if weekday == 'monday':
         str_date = btn_res.monday(entered_week)
@@ -261,23 +289,20 @@ async def info_bth(callback: types.CallbackQuery):
     await bot.send_message(callback.from_user.id, mess,
                             reply_markup=inline_kb.main_btn, parse_mode="Markdown")
 
-@dp.callback_query_handler(text = ['1', '2', '3', '4', '5', '6', '7', '8']) #реакция на инлайн кнопку
+@dp.callback_query_handler(text = 'edit') #реакция на кнопку выбрать группу снова
 async def info_bth(callback: types.CallbackQuery):
-    index = callback.data
-    a = btn_res.get_groups()
-    # print(index)
-    await bot.delete_message(callback.from_user.id, callback.message.message_id)  # удаление последнего сообщения
-    await bot.send_message(callback.from_user.id, f"Страница №{index}",
-                               reply_markup=inline_kb.show_groups(a, index))
+    await bot.send_message(callback.from_user.id, f"Введите группу снова: ")
+    db.set_status(callback.from_user.id, 'regis') #возвращаем статус регистации
+    await bot.delete_message(callback.from_user.id, callback.message.message_id)
 
 @dp.callback_query_handler() #реакция на инлайн кнопку
 async def info_bth(callback: types.CallbackQuery):
     await bot.delete_message(callback.from_user.id, callback.message.message_id)
     group = callback.data
-    await bot.send_message(callback.from_user.id, f"Вы ввели свою  группу: {group}\nТеперь вы можете посмотреть "
+    db.set_name_group(callback.from_user.id, group) #запись группы в БД
+    btn_res.get_id_group(group) #обновление ссылки
+    await bot.send_message(callback.from_user.id, f"Вы выбрали группу: {group}\nТеперь вы можете посмотреть "
                                                   f"расписание:\n\n/today - на сегодня\n/by_group - по неделям")
-    db.set_name_group(callback.from_user.id, group)
-    btn_res.get_id_group(group)
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates = True)

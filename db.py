@@ -10,10 +10,20 @@ class Database:
             result = self.cursor.execute("SELECT * FROM `users` WHERE `user_id` = ?", (user_id,)).fetchmany(1)
             return bool(len(result))
 
-    def check_group(self, user_id):#Проверка на наличие человека и его группы
+    def check_group(self, user_id):#Проверка на то что группа у человека пуста
         with self.connection:
             result = self.cursor.execute("SELECT * FROM `users` WHERE `user_id` = ? AND `group` = 'bebra'", (user_id,)).fetchmany(1)
             return bool(len(result))
+
+    def check_status(self, user_id):#Проверка статуса человека
+        with self.connection:
+            result = self.cursor.execute("SELECT * FROM `users` WHERE `user_id` = ?", (user_id,)).fetchmany(1)
+            for i in result:
+                return i[4]
+
+    def set_status(self, user_id, status):
+        with self.connection:
+            return self.cursor.execute("UPDATE `users` SET `status` = ? WHERE `user_id` = ?", (status, user_id,))
 
     def get_name_group (self, user_id):
         with self.connection:
