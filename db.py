@@ -12,7 +12,7 @@ class Database:
 
     def check_group(self, user_id):#Проверка на наличие человека и его группы
         with self.connection:
-            result = self.cursor.execute("SELECT * FROM `users` WHERE `user_id` = ? AND `group` = ''", (user_id,)).fetchmany(1)
+            result = self.cursor.execute("SELECT * FROM `users` WHERE `user_id` = ? AND `group` = 'bebra'", (user_id,)).fetchmany(1)
             return bool(len(result))
 
     def get_name_group (self, user_id):

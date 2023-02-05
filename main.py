@@ -62,63 +62,73 @@ async def start(message: types.Message):
 async def profile(message: types.Message):
     if message.chat.type == 'private':
         # TODO добавить возможность изменить группу
-
-        # if not db.user_exists(message.from_user.id):
-        #     db.add_user(message.from_user.id)
-        await bot.send_message(message.from_user.id, "Твоя группа: ")
+        if db.check_group(message.from_user.id):
+            await bot.delete_message(message.from_user.id, message.message_id)
+            await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу")
+        else:
+            name_group = db.get_name_group(message.from_user.id)
+            await bot.send_message(message.from_user.id, f"Твоя группа: *{name_group}*", parse_mode="Markdown")
+            await bot.send_message(message.from_user.id, f"Скоро будет возможность менять группу")
 
 @dp.message_handler(commands=['today'])
 async def today(message: types.Message):
     if message.chat.type == 'private':
-        now = datetime.now()
-        weekday = datetime.weekday(now) #Узнаем день недели
-
-        if weekday == 0:  # monday
-            str_date = btn_res.monday(num_week[0])
-            mess = await output_schedule(str_date, "Понедельник")
-            await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
-
-        elif weekday == 1:  # tuesday
-            str_date = btn_res.tuesday(num_week[0])
-            mess = await output_schedule(str_date, "Вторник")
-            await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
-
-        elif weekday == 2:  # wednesday
-            str_date = btn_res.wednesday(num_week[0])
-            mess = await output_schedule(str_date, "Среда")
-            await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
-
-        elif weekday == 3:  # thursday
-            str_date = btn_res.thursday(num_week[0])
-            mess = await output_schedule(str_date, "Четверг")
-            await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
-
-        elif weekday == 4:  # friday
-            str_date = btn_res.friday(num_week[0])
-            mess = await output_schedule(str_date, "Пятница")
-            # await bot.send_message(message.from_user.id, mess)
-            await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
-
-        elif weekday == 5:  # saturday
-            str_date = btn_res.saturday(num_week[0])
-            mess = await output_schedule(str_date, "Cуббота")
-            await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
+        if db.check_group(message.from_user.id):
+            await bot.delete_message(message.from_user.id, message.message_id)
+            await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу")
         else:
-            await bot.send_message(message.from_user.id, "Сегодня же воскресенье, отдыхай!")
+            now = datetime.now()
+            weekday = datetime.weekday(now) #Узнаем день недели
+
+            if weekday == 0:  # monday
+                str_date = btn_res.monday(num_week[0])
+                mess = await output_schedule(str_date, "Понедельник")
+                await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
+
+            elif weekday == 1:  # tuesday
+                str_date = btn_res.tuesday(num_week[0])
+                mess = await output_schedule(str_date, "Вторник")
+                await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
+
+            elif weekday == 2:  # wednesday
+                str_date = btn_res.wednesday(num_week[0])
+                mess = await output_schedule(str_date, "Среда")
+                await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
+
+            elif weekday == 3:  # thursday
+                str_date = btn_res.thursday(num_week[0])
+                mess = await output_schedule(str_date, "Четверг")
+                await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
+
+            elif weekday == 4:  # friday
+                str_date = btn_res.friday(num_week[0])
+                mess = await output_schedule(str_date, "Пятница")
+                # await bot.send_message(message.from_user.id, mess)
+                await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
+
+            elif weekday == 5:  # saturday
+                str_date = btn_res.saturday(num_week[0])
+                mess = await output_schedule(str_date, "Cуббота")
+                await bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
+            else:
+                await bot.send_message(message.from_user.id, "Сегодня же воскресенье, отдыхай!")
 
 @dp.message_handler(commands=['by_group'])
 async def by_group(message: types.Message):
     if message.chat.type == 'private':
         # TODO просьба вводить неделю(предлагать нынешнюю) и сделать проверку
-        #Проверить статус пользователся на то, что он делает запрос на неделю
-        await bot.send_message(message.from_user.id, "Введи неделю: ")
-        #Проверка на то что введена цифра
+        if db.check_group(message.from_user.id):
+            await bot.delete_message(message.from_user.id, message.message_id)
+            await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу")
+        else:
+            await bot.send_message(message.from_user.id, "Введи неделю на которе хотите посмотреть расписание: ")
+
 
 @dp.message_handler(commands=['by_teacher'])
 async def by_teacher(message: types.Message):
     if message.chat.type == 'private':
-        # TODO нужно парсить данные с другого окна - сделаю позже
 
+        # TODO нужно парсить данные с другого окна - сделаю позже
         await bot.send_message(message.from_user.id, "Скоро тут все будет... наверное.")
 
 @dp.message_handler(commands=['week'])
@@ -129,14 +139,16 @@ async def week(message: types.Message):
 @dp.message_handler(commands=['help'])
 async def help(message: types.Message):
     if message.chat.type == 'private':
-        await bot.send_message(message.from_user.id, '''При ошибках, сперва попробуйте перезагрузить бота /start 
-        Кратко о командах: 
-        /profile - выводит информацию о вашей группе, при необходимости тут можно поменять группу.
-        /today - выводить расписание вашей группы на сегодня.
-        /by_group - показывает недельное расписание по вашей группе.
-        /by_teacher - показывает расписание по преподу.
-        /week - показывает текущую неделю.
-        ''')
+        await bot.send_message(message.from_user.id, '''При ошибках, пишите мне @Cytire и попробуйте перезагрузить бота /start
+
+Кратко о командах: 
+/profile - выводит информацию о вашей группе, при необходимости тут можно поменять группу.
+/today - выводить расписание вашей группы на сегодня.
+/by_group - показывает недельное расписание по вашей группе.
+/by_teacher - показывает расписание по преподу.
+/week - показывает текущую неделю.
+
+''')
 
 # @dp.message_handler(commands=['news'])
 # async def sendall(message: types.Message):
@@ -156,56 +168,71 @@ async def help(message: types.Message):
 
 @dp.message_handler() #реакция на сообщения
 async def send_btn(message: types.Message):
-    print(message.text) #Введеная неделя
+    if db.check_group(message.from_user.id):
+        await bot.delete_message(message.from_user.id, message.message_id)
+        await bot.send_message(message.from_user.id, f"Вы еще не выбрали группу")
+    else:
+        print(message.text) #Введеная неделя
+        global entered_week # сохраним для инлайн кнопок
+        entered_week = message.text
 
-    global entered_week # сохраним для инлайн кнопок
-    entered_week = message.text
+        try:
+            if int(message.text) and 22<=int(message.text)<=40:
+                if message.text == str(num_week[0]): #Когда выбрана текущая неделя.
+                    now = datetime.now()
+                    weekday = datetime.weekday(now)# Узнаем день недели
 
-    if message.text == str(num_week[0]): #Когда выбрана текущая неделя.
-        now = datetime.now()
-        weekday = datetime.weekday(now)# Узнаем день недели
+                    if weekday == 0:  # monday
+                        str_date = btn_res.monday(num_week[0])
+                        mess = await output_schedule(str_date, "Понедельник")
+                        await bot.send_message(message.from_user.id, mess,
+                                                reply_markup=inline_kb.main_btn, parse_mode="Markdown")
 
-        if weekday == 0:  # monday
-            str_date = btn_res.monday(num_week[0])
-            mess = await output_schedule(str_date, "Понедельник")
-            await bot.send_message(message.from_user.id, mess,
-                                    reply_markup=inline_kb.main_btn, parse_mode="Markdown")
+                    elif weekday == 1:  # tuesday
+                        str_date = btn_res.tuesday(num_week[0])
+                        mess = await output_schedule(str_date, 'Вторник')
+                        await bot.send_message(message.from_user.id, mess,
+                                               reply_markup=inline_kb.main_btn,  parse_mode="Markdown")
 
-        elif weekday == 1:  # tuesday
-            str_date = btn_res.tuesday(num_week[0])
-            mess = await output_schedule(str_date, 'Вторник')
-            await bot.send_message(message.from_user.id, mess,
-                                   reply_markup=inline_kb.main_btn,  parse_mode="Markdown")
+                    elif weekday == 2:  # wednesday
+                        str_date = btn_res.wednesday(num_week[0])
+                        mess = await output_schedule(str_date, 'Среда')
+                        await bot.send_message(message.from_user.id, mess,
+                                               reply_markup=inline_kb.main_btn, parse_mode="Markdown")
 
-        elif weekday == 2:  # wednesday
-            str_date = btn_res.wednesday(num_week[0])
-            mess = await output_schedule(str_date, 'Среда')
-            await bot.send_message(message.from_user.id, mess,
-                                   reply_markup=inline_kb.main_btn, parse_mode="Markdown")
+                    elif weekday == 3:  # thursday
+                        str_date = btn_res.thursday(num_week[0])
+                        mess = await output_schedule(str_date, 'Четверг')
+                        await bot.send_message(message.from_user.id, mess,
+                                               reply_markup=inline_kb.main_btn,  parse_mode="Markdown")
 
-        elif weekday == 3:  # thursday
-            str_date = btn_res.thursday(num_week[0])
-            mess = await output_schedule(str_date, 'Четверг')
-            await bot.send_message(message.from_user.id, mess,
-                                   reply_markup=inline_kb.main_btn,  parse_mode="Markdown")
+                    elif weekday == 4:  # friday
+                        str_date = btn_res.friday(num_week[0])
+                        mess = await output_schedule(str_date, 'Пятница')
+                        await bot.send_message(message.from_user.id, mess,
+                                               reply_markup=inline_kb.main_btn, parse_mode="Markdown")
 
-        elif weekday == 4:  # friday
-            str_date = btn_res.friday(num_week[0])
-            mess = await output_schedule(str_date, 'Пятница')
-            await bot.send_message(message.from_user.id, mess,
-                                   reply_markup=inline_kb.main_btn, parse_mode="Markdown")
+                    elif weekday == 5:  # saturday
+                        str_date = btn_res.saturday(num_week[0])
+                        mess = await output_schedule(str_date, "Cуббота")
+                        await bot.send_message(message.from_user.id, mess,
+                                               reply_markup=inline_kb.main_btn, parse_mode="Markdown")
 
-        elif weekday == 5:  # saturday
-            str_date = btn_res.saturday(num_week[0])
-            mess = await output_schedule(str_date, "Cуббота")
-            await bot.send_message(message.from_user.id, mess,
-                                   reply_markup=inline_kb.main_btn, parse_mode="Markdown")
+                    elif weekday == 6:  # sunday
+                        str_date = btn_res.monday(message.text)
+                        mess = await output_schedule(str_date, "monday")
+                        await bot.send_message(message.from_user.id, mess,
+                                               reply_markup=inline_kb.main_btn, parse_mode="Markdown")
 
-    else: #Если неделя не текущая начинаем с понедельника
-        str_date = btn_res.monday(message.text)
-        mess = await output_schedule(str_date, "monday")
-        await bot.send_message(message.from_user.id, mess,
-                               reply_markup=inline_kb.main_btn, parse_mode="Markdown")
+                else: #Если неделя не текущая начинаем с понедельника
+                    str_date = btn_res.monday(message.text)
+                    mess = await output_schedule(str_date, "monday")
+                    await bot.send_message(message.from_user.id, mess,
+                                           reply_markup=inline_kb.main_btn, parse_mode="Markdown")
+            else:
+                await bot.delete_message(message.from_user.id, message.message_id)  # удаление последнего сообщения
+        except:
+            await bot.delete_message(message.from_user.id, message.message_id)  # удаление последнего сообщения
 
 async def button(weekday): #Мне не нравится как я тут сделал, но пойдет
     if weekday == 'monday':
@@ -245,8 +272,10 @@ async def info_bth(callback: types.CallbackQuery):
 
 @dp.callback_query_handler() #реакция на инлайн кнопку
 async def info_bth(callback: types.CallbackQuery):
+    await bot.delete_message(callback.from_user.id, callback.message.message_id)
     group = callback.data
-    await bot.send_message(callback.from_user.id, f"Вы ввели свою  группу: {group}\nТеперь вы можете посмотреть рассписание")
+    await bot.send_message(callback.from_user.id, f"Вы ввели свою  группу: {group}\nТеперь вы можете посмотреть "
+                                                  f"расписание:\n\n/today - на сегодня\n/by_group - по неделям")
     db.set_name_group(callback.from_user.id, group)
     btn_res.get_id_group(group)
 
